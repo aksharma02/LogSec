@@ -1,0 +1,20 @@
+{
+  "incidentId": "a0b1c2d3-e4f5-6789-abcd-ef0123456789",
+  "targetAsset": "web-server-01",
+  "analysisDate": "Tue, 26 May 2026 11:36:37 GMT",
+  "findings": [
+    {
+      "severity": "high",
+      "title": "SSH Brute Force Attack Detected from 203.0.113.5",
+      "description": "IP 203.0.113.5 performed 12 failed SSH login attempts within a 5-minute sliding window.",
+      "ip": "203.0.113.5"
+    },
+    {
+      "severity": "medium",
+      "title": "Potential Privilege Escalation: root executing sudo",
+      "description": "User \"root\" executed a command matching privilege escalation signature: \"sudo\".",
+      "ip": "Unknown"
+    }
+  ],
+  "timelineSummary": "12 failed password entries followed by root access compromise and backdoor wheel group modifications."
+}
