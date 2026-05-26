@@ -1,4 +1,4 @@
-# AI Security Analyzer (ai-sec-analyzer)
+# LogSec (ai-sec-analyzer)
 
 An enterprise-grade, decentralized **Log Ingestion & Real-Time AI Security Analyst** built with Next.js 14 App Router, TypeScript, Vanilla CSS, PostgreSQL + pgvector, and BullMQ background workers. 
 
