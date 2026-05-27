@@ -1,6 +1,6 @@
 # LogSec (ai-sec-analyzer)
 
-## Problem
+### Problem
 
 Organizations generate huge amounts of logs daily, making it difficult to manually detect threats, suspicious activities, and security incidents in real time.
 
