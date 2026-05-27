@@ -1,8 +1,8 @@
 # LogSec (ai-sec-analyzer)
 
-An enterprise-grade, decentralized **Log Ingestion & Real-Time AI Security Analyst** built with Next.js 14 App Router, TypeScript, Vanilla CSS, PostgreSQL + pgvector, and BullMQ background workers. 
+An enterprise-grade, decentralized **Log Ingestion & Real-Time AI Security Analyst** built with Next.js 14 App Router, TypeScript, Vanilla CSS, PostgreSQL + pgvector and BullMQ background workers. 
 
-Designed for Security Operations Center (SOC) teams, `LogSec` automatically ingests unstructured system, web application, and Cloud logs, sniffs their formats, runs multi-stage threat signature detectors, index-stores logs chunks as high-dimensional OpenAI embeddings, and feeds a real-time conversational GPT-4o Security Analyst Chatbot using dynamic pgvector Retrieval-Augmented Generation (RAG).
+Designed for Security Operations Center (SOC) teams, `LogSec` automatically ingests unstructured system, web application and Cloud logs, sniffs their formats, runs multi-stage threat signature detectors, index-stores logs chunks as high-dimensional OpenAI embeddings, and feeds a real-time conversational GPT-4o Security Analyst Chatbot using dynamic pgvector Retrieval-Augmented Generation (RAG).
 
 ---
 
