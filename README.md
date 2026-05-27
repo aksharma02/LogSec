@@ -1,5 +1,13 @@
 # LogSec (ai-sec-analyzer)
 
+*Problem*
+
+Organizations generate huge amounts of logs daily, making it difficult to manually detect threats, suspicious activities, and security incidents in real time.
+
+*Solution*
+
+LogSec automatically ingests, analyzes, and monitors logs using AI-powered threat detection and RAG-based security analysis, helping teams quickly identify and investigate potential cyber threats through real-time insights and conversational querying.
+
 An enterprise-grade, decentralized **Log Ingestion & Real-Time AI Security Analyst** built with Next.js 14 App Router, TypeScript, Vanilla CSS, PostgreSQL + pgvector and BullMQ background workers. 
 
 Designed for Security Operations Center (SOC) teams, `LogSec` automatically ingests unstructured system, web application and Cloud logs, sniffs their formats, runs multi-stage threat signature detectors, index-stores logs chunks as high-dimensional OpenAI embeddings, and feeds a real-time conversational GPT-4o Security Analyst Chatbot using dynamic pgvector Retrieval-Augmented Generation (RAG).
