@@ -44,59 +44,63 @@ export async function insertLogEntries(entries: LogEntry[]): Promise<void> {
     'parse_error',
   ];
 
-  const values: any[] = [];
-  const valuePlaceholders: string[] = [];
-  let placeholderIndex = 1;
+  const batchSize = 500;
+  for (let i = 0; i < entries.length; i += batchSize) {
+    const batch = entries.slice(i, i + batchSize);
+    const values: any[] = [];
+    const valuePlaceholders: string[] = [];
+    let placeholderIndex = 1;
 
-  for (const entry of entries) {
-    const rowPlaceholders: string[] = [];
+    for (const entry of batch) {
+      const rowPlaceholders: string[] = [];
 
-    // Push the values in the exact DDL schema columns order
-    values.push(entry.id);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      // Push the values in the exact DDL schema columns order
+      values.push(entry.id);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.sessionId);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.sessionId);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.lineNum);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.lineNum);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.ts);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.ts);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.ip);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.ip);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.userName);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.userName);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.action);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.action);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.resource);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.resource);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.statusCode);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.statusCode);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.rawLine);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.rawLine);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.format);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.format);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    values.push(entry.parseError);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      values.push(entry.parseError);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    valuePlaceholders.push(`(${rowPlaceholders.join(', ')})`);
+      valuePlaceholders.push(`(${rowPlaceholders.join(', ')})`);
+    }
+
+    const sql = `
+      INSERT INTO log_entries (${columns.join(', ')})
+      VALUES ${valuePlaceholders.join(', ')}
+    `;
+
+    await query(sql, values);
   }
-
-  const sql = `
-    INSERT INTO log_entries (${columns.join(', ')})
-    VALUES ${valuePlaceholders.join(', ')}
-  `;
-
-  await query(sql, values);
 }
 
 /**

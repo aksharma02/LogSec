@@ -21,7 +21,7 @@ export interface LogChunk {
  */
 export async function embedText(text: string): Promise<number[]> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || apiKey.startsWith('mock') || apiKey.includes('sk-proj-')) {
+  if (!apiKey || apiKey.startsWith('mock') || apiKey.includes('your-openai-api-key')) {
     // Generate a deterministic mock 1536-dimensional float vector filled with 0.1
     return new Array(1536).fill(0.1);
   }
@@ -34,35 +34,35 @@ export async function embedText(text: string): Promise<number[]> {
 
 /**
  * Requests embeddings for a batch of strings, grouping inputs into batches of 100
- * and sleeping for 500ms between batches to prevent triggering API rate limits.
+ * and running them concurrently to prevent sequential rate-limiting delays.
  */
 export async function embedBatch(texts: string[]): Promise<number[][]> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || apiKey.startsWith('mock') || apiKey.includes('sk-proj-')) {
+  if (!apiKey || apiKey.startsWith('mock') || apiKey.includes('your-openai-api-key')) {
     // Generate deterministic mock vectors filled with 0.1 for all text elements concurrently
     return texts.map(() => new Array(1536).fill(0.1));
   }
 
-  const embeddings: number[][] = [];
   const batchSize = 100;
-
+  const batches: string[][] = [];
   for (let i = 0; i < texts.length; i += batchSize) {
-    const batch = texts.slice(i, i + batchSize);
+    batches.push(texts.slice(i, i + batchSize));
+  }
 
-    // Call OpenAI API for the current batch of 100 texts
-    const response = await openai.embeddings.create({
+  // Trigger concurrent OpenAI API embedding requests for all batches
+  const promises = batches.map(batch =>
+    openai.embeddings.create({
       model: 'text-embedding-3-small',
       input: batch,
-    });
+    })
+  );
 
-    // Capture returned float array vector embeddings in order
+  const responses = await Promise.all(promises);
+
+  const embeddings: number[][] = [];
+  for (const response of responses) {
     const batchEmbeddings = response.data.map(d => d.embedding);
     embeddings.push(...batchEmbeddings);
-
-    // If there are more batches remaining, enforce a 500ms rate-limit offset
-    if (i + batchSize < texts.length) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
   }
 
   return embeddings;

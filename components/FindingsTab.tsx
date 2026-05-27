@@ -49,7 +49,7 @@ export default function FindingsTab({ sessionId, findings = [] }: FindingsTabPro
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-md pl-9 pr-4 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 font-mono"
+            className="w-full bg-slate-950 border border-slate-800 rounded-md pl-9 pr-4 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-red-500 font-mono"
             placeholder="Search category or title..."
           />
         </div>
@@ -62,7 +62,7 @@ export default function FindingsTab({ sessionId, findings = [] }: FindingsTabPro
             <select
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 font-mono"
+              className="bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-red-500 font-mono"
             >
               <option value="all">ALL SEVERITIES</option>
               <option value="critical">CRITICAL</option>
@@ -109,7 +109,7 @@ export default function FindingsTab({ sessionId, findings = [] }: FindingsTabPro
               <Card
                 key={finding.id}
                 className={`border-slate-800 transition-all ${
-                  isExpanded ? 'border-cyan-500/25 bg-slate-900/40' : 'bg-slate-900/20 hover:border-slate-800/80'
+                  isExpanded ? 'border-red-500/25 bg-slate-900/40' : 'bg-slate-900/20 hover:border-slate-800/80'
                 }`}
               >
                 <div
@@ -124,7 +124,7 @@ export default function FindingsTab({ sessionId, findings = [] }: FindingsTabPro
 
                   <div className="flex items-center gap-3">
                     {ips.length > 0 && (
-                      <span className="text-xs text-cyan-400 font-mono bg-cyan-500/5 px-2 py-0.5 border border-cyan-500/10 rounded">
+                      <span className="text-xs text-red-400 font-mono bg-red-500/5 px-2 py-0.5 border border-red-500/10 rounded">
                         {ips.length} IP Address
                       </span>
                     )}
@@ -147,7 +147,7 @@ export default function FindingsTab({ sessionId, findings = [] }: FindingsTabPro
                     {finding.evidence && (
                       <div>
                         <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono flex items-center gap-1.5">
-                          <Terminal className="h-3 w-3 text-cyan-400" />
+                          <Terminal className="h-3 w-3 text-red-400" />
                           <span>Forensics Evidence Logs</span>
                         </h4>
                         
@@ -162,7 +162,7 @@ export default function FindingsTab({ sessionId, findings = [] }: FindingsTabPro
                           ) : finding.evidence.rawLine ? (
                             <div className="whitespace-pre overflow-x-auto">{finding.evidence.rawLine}</div>
                           ) : (
-                            <pre className="whitespace-pre overflow-x-auto text-[10px] text-cyan-500">
+                            <pre className="whitespace-pre overflow-x-auto text-[10px] text-red-500">
                               {JSON.stringify(finding.evidence, null, 2)}
                             </pre>
                           )}
@@ -177,7 +177,7 @@ export default function FindingsTab({ sessionId, findings = [] }: FindingsTabPro
                       </h4>
                       <ul className="list-disc pl-4 mt-1.5 space-y-1">
                         {recommendations.map((rec: string, i: number) => (
-                          <li key={i} className="text-xs text-cyan-300/80">
+                          <li key={i} className="text-xs text-red-300/80">
                             {rec}
                           </li>
                         ))}

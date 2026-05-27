@@ -15,8 +15,11 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AI Security Analyzer",
+  title: "LogSec - AI Security Analyzer",
   description: "Automated cybersecurity logs sniffer and RAG context assistant dashboard.",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({

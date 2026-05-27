@@ -41,7 +41,7 @@ export default function SessionDashboard({
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col justify-center items-center font-mono text-xs uppercase tracking-widest space-y-4">
-        <div className="h-8 w-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+        <div className="h-8 w-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
         <span className="animate-pulse">VERIFYING OPERATOR ACCESS CREDENTIALS...</span>
       </div>
     );
@@ -96,10 +96,10 @@ export default function SessionDashboard({
             >
               <ArrowLeft className="h-4 w-4 text-slate-400" />
             </button>
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-cyan-400" />
+            <div className="flex items-center gap-2.5">
+              <img src="/logo.png" alt="LogSec Logo" className="h-7 w-auto object-contain rounded" />
               <span className="font-mono font-bold tracking-wider text-sm sm:text-base">
-                AI SEC <span className="text-cyan-400">ANALYZER</span>
+                Log<span className="text-red-400">Sec</span>
               </span>
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function SessionDashboard({
         <aside className="w-full md:w-64 space-y-6 shrink-0">
           <Card className="border-slate-800 bg-slate-900/30">
             <CardHeader className="pb-3">
-              <CardTitle className="text-xs uppercase tracking-wider font-mono text-cyan-400">
+              <CardTitle className="text-xs uppercase tracking-wider font-mono text-red-400">
                 Session Audit specs
               </CardTitle>
             </CardHeader>
@@ -142,7 +142,7 @@ export default function SessionDashboard({
 
               <div>
                 <span className="text-slate-500 font-mono block">INGESTION FORMAT</span>
-                <span className="text-cyan-400 font-bold uppercase font-mono block mt-0.5">
+                <span className="text-red-400 font-bold uppercase font-mono block mt-0.5">
                   {session.logSource}
                 </span>
               </div>
@@ -228,7 +228,7 @@ export default function SessionDashboard({
                   initialQaHistory.map((item) => (
                     <Card key={item.id} className="border-slate-800 bg-slate-900/20">
                       <CardHeader className="bg-slate-950/40 pb-2">
-                        <CardTitle className="text-xs text-cyan-400 font-mono flex items-center gap-1.5">
+                        <CardTitle className="text-xs text-red-400 font-mono flex items-center gap-1.5">
                           <History className="h-3.5 w-3.5" />
                           <span>ANALYST QUESTION: "{item.question}"</span>
                         </CardTitle>
@@ -254,7 +254,7 @@ export default function SessionDashboard({
                         {item.answer.findings && item.answer.findings.length > 0 && (
                           <div>
                             <span className="text-[10px] text-slate-500 font-mono uppercase block">IDENTIFIED COMPROMISES</span>
-                            <ul className="list-disc pl-4 mt-1 text-cyan-300 space-y-0.5">
+                            <ul className="list-disc pl-4 mt-1 text-red-300 space-y-0.5">
                               {item.answer.findings.map((f: any, i: number) => (
                                 <li key={i}>{f.title}</li>
                               ))}

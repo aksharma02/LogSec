@@ -77,7 +77,7 @@ export default function IngestionLandingPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col justify-center items-center font-mono text-xs uppercase tracking-widest space-y-4">
-        <div className="h-8 w-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+        <div className="h-8 w-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
         <span className="animate-pulse">VERIFYING OPERATOR ACCESS CREDENTIALS...</span>
       </div>
     );
@@ -142,11 +142,11 @@ export default function IngestionLandingPage() {
         
         {/* Header Branding */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center p-3 bg-cyan-500/10 rounded-xl border border-cyan-500/25 mb-2 glow-cyan">
-            <Shield className="h-10 w-10 text-cyan-400" />
+          <div className="flex flex-col items-center justify-center space-y-2 mb-2">
+            <img src="/logo.png" alt="LogSec Logo" className="h-16 w-auto object-contain glow-red rounded-lg p-1 bg-slate-900/40 border border-slate-800/80" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-mono">
-            AI SEC <span className="text-cyan-400">ANALYZER</span>
+            Log<span className="text-red-400">Sec</span>
           </h1>
           <p className="text-slate-400 text-sm sm:text-base max-w-md mx-auto">
             Decentralized log ingestion and real-time semantic compromise scanner.
@@ -156,7 +156,7 @@ export default function IngestionLandingPage() {
         {/* Upload Container */}
         <Card className="border-slate-800/80 bg-slate-900/50 backdrop-blur-xl shadow-2xl">
           <CardHeader>
-            <CardTitle className="font-mono text-base tracking-wider text-cyan-400 uppercase">
+            <CardTitle className="font-mono text-base tracking-wider text-red-400 uppercase">
               Ingest Logs File
             </CardTitle>
             <CardDescription className="text-slate-400 text-xs">
@@ -170,26 +170,26 @@ export default function IngestionLandingPage() {
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-350 ${
                 isDragActive
-                  ? 'border-cyan-500 bg-cyan-500/5 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
+                  ? 'border-red-500 bg-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
                   : file
-                  ? 'border-cyan-500/40 bg-slate-900/80'
+                  ? 'border-red-500/40 bg-slate-900/80'
                   : 'border-slate-800 hover:border-slate-700 bg-slate-950/20'
               }`}
             >
               <input {...getInputProps()} />
               <div className="flex flex-col items-center space-y-3">
-                <div className={`p-3 rounded-full ${file ? 'bg-cyan-500/15' : 'bg-slate-800'} transition-colors`}>
+                <div className={`p-3 rounded-full ${file ? 'bg-red-500/15' : 'bg-slate-800'} transition-colors`}>
                   {file ? (
-                    <FileText className="h-8 w-8 text-cyan-400" />
+                    <FileText className="h-8 w-8 text-red-400" />
                   ) : (
                     <Upload className="h-8 w-8 text-slate-400" />
                   )}
                 </div>
                 {file ? (
                   <div className="space-y-1">
-                    <p className="text-sm font-mono text-cyan-300 font-semibold">{file.name}</p>
+                    <p className="text-sm font-mono text-red-300 font-semibold">{file.name}</p>
                     <p className="text-xs text-slate-500">
-                      {(file.size / 1024).toFixed(2)} KB • Sniffed: <span className="text-cyan-400 uppercase font-bold">{detectedFormat}</span>
+                      {(file.size / 1024).toFixed(2)} KB • Sniffed: <span className="text-red-400 uppercase font-bold">{detectedFormat}</span>
                     </p>
                   </div>
                 ) : (
@@ -217,7 +217,7 @@ export default function IngestionLandingPage() {
                       type="text"
                       value={sessionName}
                       onChange={(e) => setSessionName(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-red-500 font-mono"
                       placeholder="Operator logs audit"
                     />
                   </div>
@@ -229,7 +229,7 @@ export default function IngestionLandingPage() {
                     <select
                       value={detectedFormat}
                       onChange={(e) => setDetectedFormat(e.target.value as any)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-red-500 font-mono"
                     >
                       <option value="syslog">Syslog (RFC 5424/BSD)</option>
                       <option value="apache">Apache/Nginx Combined</option>
@@ -251,7 +251,7 @@ export default function IngestionLandingPage() {
                 <Button
                   onClick={handleAnalyze}
                   loading={loading}
-                  className="w-full glow-cyan"
+                  className="w-full glow-red"
                   size="lg"
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />

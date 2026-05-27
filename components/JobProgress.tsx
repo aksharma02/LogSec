@@ -81,14 +81,14 @@ export default function JobProgress({ jobId, onComplete }: JobProgressProps) {
   };
 
   return (
-    <Card className="max-w-xl mx-auto border-cyan-500/20 bg-slate-900/80 backdrop-blur-xl shadow-2xl shadow-cyan-500/5">
-      <CardHeader className="text-center pb-2">
-        <div className="flex justify-center mb-4">
-          <div className="p-3 bg-cyan-500/10 rounded-full border border-cyan-500/30 animate-pulse">
-            <Shield className="h-8 w-8 text-cyan-400" />
+    <Card className="max-w-xl mx-auto border-red-500/20 bg-slate-900/80 backdrop-blur-xl shadow-2xl shadow-red-500/5">
+      <CardHeader className="flex flex-col items-center text-center pb-2 pt-6">
+        <div className="mb-3">
+          <div className="p-3 bg-red-500/10 rounded-full border border-red-500/30 animate-pulse">
+            <Shield className="h-8 w-8 text-red-400" />
           </div>
         </div>
-        <CardTitle className="text-xl font-mono text-cyan-400 flex items-center justify-center gap-2">
+        <CardTitle className="text-xl font-mono text-red-400 flex items-center justify-center gap-2">
           INGESTING SECURITY LOGS
         </CardTitle>
         <CardDescription className="text-slate-500 font-mono text-xs mt-1">
@@ -102,15 +102,18 @@ export default function JobProgress({ jobId, onComplete }: JobProgressProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex justify-between text-sm font-mono">
-              <span className="text-cyan-400 text-xs sm:text-sm">{getStepLabel(step)}</span>
-              <span className="text-cyan-300 font-bold">{progress}%</span>
+            <div className="flex justify-between items-center text-xs font-mono mb-2 uppercase tracking-wide">
+              <span className="text-red-400 text-xs sm:text-sm">{getStepLabel(step)}</span>
+              <span className="text-red-300 font-bold">{progress}%</span>
             </div>
-            
-            <Progress value={progress} />
-
-            <div className="flex items-center justify-center gap-2 text-xs font-mono text-slate-500 animate-pulse mt-4">
-              <RefreshCw className="h-3 w-3 animate-spin text-cyan-500" />
+            <div className="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800 p-0.5">
+              <div
+                className="bg-gradient-to-r from-red-600 to-red-400 h-full rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(239,68,68,0.5)]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-500 font-mono mt-3 uppercase tracking-widest">
+              <RefreshCw className="h-3 w-3 animate-spin text-red-500" />
               <span>DO NOT CLOSE THIS PAGE. ANALYZING THREATS AND RETRIEVING EMBEDDINGS...</span>
             </div>
           </div>

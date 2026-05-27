@@ -105,10 +105,10 @@ export default function OverviewTab({ session, findings = [], logEntries = [] }:
             <CardTitle className="text-xs font-mono font-bold tracking-wider text-slate-400 uppercase">
               Total Logs parsed
             </CardTitle>
-            <Layers className="h-4 w-4 text-cyan-400" />
+            <Layers className="h-4 w-4 text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono text-cyan-300">{totalEvents.toLocaleString()}</div>
+            <div className="text-2xl font-bold font-mono text-red-300">{totalEvents.toLocaleString()}</div>
             <p className="text-[10px] text-slate-500 font-mono mt-1">TOTAL PARSED EVENT ENTRIES</p>
           </CardContent>
         </Card>
@@ -146,7 +146,7 @@ export default function OverviewTab({ session, findings = [], logEntries = [] }:
         {/* AreaChart: Logs frequency over time */}
         <Card className="border-slate-800 bg-slate-900/30">
           <CardHeader>
-            <CardTitle className="text-xs uppercase tracking-wider font-mono text-cyan-400">
+            <CardTitle className="text-xs uppercase tracking-wider font-mono text-red-400">
               Event Frequency Timeline
             </CardTitle>
           </CardHeader>
@@ -155,17 +155,17 @@ export default function OverviewTab({ session, findings = [], logEntries = [] }:
               <AreaChart data={timelineData}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#e13939" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#e13939" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="hour" stroke="#475569" fontSize={10} fontClassName="font-mono" />
                 <YAxis stroke="#475569" fontSize={10} fontClassName="font-mono" />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
-                  labelClassName="font-mono text-cyan-400 text-xs"
+                  labelClassName="font-mono text-red-400 text-xs"
                 />
-                <Area type="monotone" dataKey="count" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorCount)" />
+                <Area type="monotone" dataKey="count" stroke="#e13939" strokeWidth={2} fillOpacity={1} fill="url(#colorCount)" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -174,7 +174,7 @@ export default function OverviewTab({ session, findings = [], logEntries = [] }:
         {/* PieChart: Findings severity */}
         <Card className="border-slate-800 bg-slate-900/30">
           <CardHeader>
-            <CardTitle className="text-xs uppercase tracking-wider font-mono text-cyan-400">
+            <CardTitle className="text-xs uppercase tracking-wider font-mono text-red-400">
               Findings Severity Matrix
             </CardTitle>
           </CardHeader>
@@ -220,7 +220,7 @@ export default function OverviewTab({ session, findings = [], logEntries = [] }:
       {/* Top Suspicious IPs */}
       <Card className="border-slate-800 bg-slate-900/30">
         <CardHeader>
-          <CardTitle className="text-xs uppercase tracking-wider font-mono text-cyan-400">
+          <CardTitle className="text-xs uppercase tracking-wider font-mono text-red-400">
             Top Distributed Threat Sources (IP / Nodes)
           </CardTitle>
         </CardHeader>
@@ -241,7 +241,7 @@ export default function OverviewTab({ session, findings = [], logEntries = [] }:
               <TableBody>
                 {topIps.map((item, idx) => (
                   <TableRow key={item.ip}>
-                    <TableCell className="text-cyan-400 font-bold">{item.ip}</TableCell>
+                    <TableCell className="text-red-400 font-bold">{item.ip}</TableCell>
                     <TableCell>{item.count}</TableCell>
                     <TableCell className="text-right">
                       {idx === 0 ? (

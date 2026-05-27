@@ -24,47 +24,52 @@ export async function insertChunks(chunks: ChunkInsertInput[]): Promise<void> {
   if (chunks.length === 0) return;
 
   const columns = ['session_id', 'chunk_text', 'embedding', 'chunk_index', 'line_start', 'line_end'];
-  const values: any[] = [];
-  const valuePlaceholders: string[] = [];
-  let placeholderIndex = 1;
+  const batchSize = 500;
 
-  for (const chunk of chunks) {
-    const rowPlaceholders: string[] = [];
+  for (let i = 0; i < chunks.length; i += batchSize) {
+    const batch = chunks.slice(i, i + batchSize);
+    const values: any[] = [];
+    const valuePlaceholders: string[] = [];
+    let placeholderIndex = 1;
 
-    // 1. session_id
-    values.push(chunk.sessionId);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+    for (const chunk of batch) {
+      const rowPlaceholders: string[] = [];
 
-    // 2. chunk_text
-    values.push(chunk.chunkText);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      // 1. session_id
+      values.push(chunk.sessionId);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    // 3. embedding (pgvector expects format: '[0.123,0.456,...]')
-    const formattedEmbedding = `[${chunk.embedding.join(',')}]`;
-    values.push(formattedEmbedding);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      // 2. chunk_text
+      values.push(chunk.chunkText);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    // 4. chunk_index
-    values.push(chunk.chunkIndex);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      // 3. embedding (pgvector expects format: '[0.123,0.456,...]')
+      const formattedEmbedding = `[${chunk.embedding.join(',')}]`;
+      values.push(formattedEmbedding);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    // 5. line_start
-    values.push(chunk.lineStart);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      // 4. chunk_index
+      values.push(chunk.chunkIndex);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    // 6. line_end
-    values.push(chunk.lineEnd);
-    rowPlaceholders.push(`$${placeholderIndex++}`);
+      // 5. line_start
+      values.push(chunk.lineStart);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
 
-    valuePlaceholders.push(`(${rowPlaceholders.join(', ')})`);
+      // 6. line_end
+      values.push(chunk.lineEnd);
+      rowPlaceholders.push(`$${placeholderIndex++}`);
+
+      valuePlaceholders.push(`(${rowPlaceholders.join(', ')})`);
+    }
+
+    const sql = `
+      INSERT INTO chunks (${columns.join(', ')})
+      VALUES ${valuePlaceholders.join(', ')}
+    `;
+
+    await query(sql, values);
   }
-
-  const sql = `
-    INSERT INTO chunks (${columns.join(', ')})
-    VALUES ${valuePlaceholders.join(', ')}
-  `;
-
-  await query(sql, values);
 }
 
 /**

@@ -168,9 +168,9 @@ export default function QATab({ sessionId }: QATabProps) {
       {/* Tab Header banner */}
       <div className="bg-slate-950 p-4 border-b border-slate-800/80 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Cpu className="h-5 w-5 text-cyan-400" />
+          <Cpu className="h-5 w-5 text-red-400" />
           <div>
-            <h3 className="text-sm font-mono text-cyan-400 font-bold uppercase tracking-wider">
+            <h3 className="text-sm font-mono text-red-400 font-bold uppercase tracking-wider">
               GPT-4o Threat Analysis Console
             </h3>
             <p className="text-[10px] text-slate-500 font-mono mt-0.5">
@@ -191,9 +191,9 @@ export default function QATab({ sessionId }: QATabProps) {
             <p className="text-slate-500 text-xs">
               Describe logs contexts or query specific indicators. Examples:
               <br />
-              <span className="text-cyan-400/80 font-mono">"Summarize all authentication anomalies"</span> or 
+              <span className="text-red-400/80 font-mono">"Summarize all authentication anomalies"</span> or 
               <br />
-              <span className="text-cyan-400/80 font-mono">"List malicious IP forensics indicators"</span>.
+              <span className="text-red-400/80 font-mono">"List malicious IP forensics indicators"</span>.
             </p>
           </div>
         ) : (
@@ -212,7 +212,7 @@ export default function QATab({ sessionId }: QATabProps) {
                     className={`h-8 w-8 rounded-full flex items-center justify-center border shrink-0 ${
                       isUser
                         ? 'bg-slate-800 border-slate-700 text-slate-300'
-                        : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                        : 'bg-red-500/10 border-red-500/30 text-red-400'
                     }`}
                   >
                     {isUser ? <User className="h-4 w-4" /> : <Cpu className="h-4 w-4" />}
@@ -289,7 +289,7 @@ export default function QATab({ sessionId }: QATabProps) {
                                     {f.affectedIps.length > 0 && (
                                       <div>
                                         <span className="text-slate-500 block uppercase">AFFECTED IPS</span>
-                                        <span className="text-cyan-400 font-bold block mt-0.5">
+                                        <span className="text-red-400 font-bold block mt-0.5">
                                           {f.affectedIps.join(', ')}
                                         </span>
                                       </div>
@@ -361,8 +361,8 @@ export default function QATab({ sessionId }: QATabProps) {
                         {msg.parsedAnalysis.recommendations.length > 0 && (
                           <Card className="border-slate-800 bg-slate-900/20">
                             <CardHeader className="pb-1.5">
-                              <CardTitle className="text-xs uppercase tracking-wider font-mono text-cyan-400 flex items-center gap-1.5">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400" />
+                              <CardTitle className="text-xs uppercase tracking-wider font-mono text-red-400 flex items-center gap-1.5">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-red-400" />
                                 <span>Remediation checklist</span>
                               </CardTitle>
                             </CardHeader>
@@ -388,7 +388,7 @@ export default function QATab({ sessionId }: QATabProps) {
         {/* Streaming Loader / Typing Indicator */}
         {loading && (
           <div className="flex justify-start items-center gap-2 animate-pulse text-xs font-mono text-slate-500">
-            <Cpu className="h-4 w-4 animate-spin text-cyan-400" />
+            <Cpu className="h-4 w-4 animate-spin text-red-400" />
             <span>AI SEC scanner analyzing logs semantic vectors...</span>
           </div>
         )}
@@ -402,13 +402,13 @@ export default function QATab({ sessionId }: QATabProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-slate-900 border border-slate-800 rounded-md p-3 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 font-mono resize-none h-16"
+            className="flex-1 bg-slate-900 border border-slate-800 rounded-md p-3 text-xs text-slate-300 focus:outline-none focus:border-red-500 font-mono resize-none h-16"
             placeholder="Ask a logs-related security query (e.g. 'Identify privilege escalation vectors'). Press Cmd+Enter to send."
           />
           <Button
             onClick={handleSend}
             disabled={!input.trim() || loading}
-            className="glow-cyan self-end px-4 py-3 h-10 flex items-center justify-center gap-2 font-mono text-xs uppercase"
+            className="glow-red self-end px-4 py-3 h-10 flex items-center justify-center gap-2 font-mono text-xs uppercase"
           >
             <Send className="h-3.5 w-3.5" />
             <span>SEND</span>

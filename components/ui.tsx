@@ -17,10 +17,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={loading || props.disabled}
         className={cn(
-          'inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95',
+          'inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95',
           {
-            // Primary (Cyan Glow Accent)
-            'bg-cyan-500 text-slate-950 hover:bg-cyan-400 font-semibold shadow-lg shadow-cyan-500/10 hover:shadow-cyan-400/35':
+            // Primary (Red Glow Accent)
+            'bg-red-500 text-slate-950 hover:bg-red-400 font-semibold shadow-lg shadow-red-500/10 hover:shadow-red-400/35':
               variant === 'primary',
             // Secondary (Dark Slate Accent)
             'bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-700':
@@ -126,7 +126,7 @@ export const Badge = ({ className, variant = 'default', ...props }: BadgeProps) 
           'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30': variant === 'medium',
           'bg-blue-500/15 text-blue-400 border border-blue-500/30': variant === 'low',
           'bg-slate-500/15 text-slate-400 border border-slate-500/30': variant === 'info',
-          'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30': variant === 'success',
+          'bg-red-500/15 text-red-400 border border-red-500/30': variant === 'success',
           'bg-slate-800 text-slate-300 border border-slate-700': variant === 'default',
           'border border-slate-700 text-slate-400': variant === 'outline',
         },
@@ -153,8 +153,8 @@ export const Progress = ({ value, className, glow = true }: ProgressProps) => {
     <div className={cn('h-2 w-full rounded-full bg-slate-800 overflow-hidden', className)}>
       <div
         className={cn(
-          'h-full bg-cyan-500 rounded-full transition-all duration-500 ease-out',
-          glow && 'shadow-[0_0_10px_rgba(6,182,212,0.6)]'
+          'h-full bg-red-500 rounded-full transition-all duration-500 ease-out',
+          glow && 'shadow-[0_0_10px_rgba(239,68,68,0.6)]'
         )}
         style={{ width: `${clampedValue}%` }}
       />
@@ -243,7 +243,7 @@ export const TabsTrigger = ({
       className={cn(
         'inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
         isActive
-          ? 'bg-slate-800 text-cyan-400 font-semibold shadow-sm border border-slate-700/50'
+          ? 'bg-slate-800 text-red-400 font-semibold shadow-sm border border-slate-700/50'
           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40',
         className
       )}

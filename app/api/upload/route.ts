@@ -40,10 +40,14 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     let jobId = '';
     try {
-      // Trigger the high-performance background logging analysis worker
-      jobId = await enqueueLogProcessing(sessionId, filePath, userId);
+      // Trigger the high-performance background logging analysis worker with a 1-second timeout
+      const enqueuePromise = enqueueLogProcessing(sessionId, filePath, userId);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Redis connection timed out')), 1000)
+      );
+      jobId = await Promise.race([enqueuePromise, timeoutPromise]);
     } catch (redisErr) {
-      console.warn('Redis connection failed. Running synchronous inline log analysis fallback...', redisErr);
+      console.warn('Redis connection failed or timed out. Running synchronous inline log analysis fallback...', redisErr);
       
       const fileContent = fs.readFileSync(filePath, 'utf8');
       

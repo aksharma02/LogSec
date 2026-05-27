@@ -171,6 +171,22 @@ describe('Log Sec Analyzer - Database Repository Integration Tests', () => {
       );
     });
 
+    test('should partition bulk insertions into sub-batches of 500 to avoid parameter limit overflow', async () => {
+      mockPool.query.mockResolvedValue({ rows: [] });
+
+      // Generate 700 mock entries
+      const entries = Array.from({ length: 700 }, (_, idx) => ({
+        ...mockEntry,
+        id: `entry-uuid-${idx}`,
+        lineNum: idx + 1,
+      }));
+
+      await insertLogEntries(entries);
+
+      // Verify that mockPool.query is called exactly twice (500 items + 200 items)
+      expect(mockPool.query).toHaveBeenCalledTimes(2);
+    });
+
     test('should retrieve log entries sequentially', async () => {
       const mockRow = {
         id: 'entry-uuid-111',
@@ -224,6 +240,29 @@ describe('Log Sec Analyzer - Database Repository Integration Tests', () => {
       );
     });
 
+    test('should partition bulk chunk insertions into sub-batches of 500 to avoid parameter limit overflow', async () => {
+      mockPool.query.mockResolvedValue({ rows: [] });
+
+      const mockChunk = {
+        sessionId: 'session-uuid-123',
+        chunkText: 'some log contents',
+        embedding: [0.1, 0.2, 0.3],
+        lineStart: 1,
+        lineEnd: 5,
+      };
+
+      // Generate 700 mock chunks
+      const chunks = Array.from({ length: 700 }, (_, idx) => ({
+        ...mockChunk,
+        chunkIndex: idx,
+      }));
+
+      await insertChunks(chunks);
+
+      // Verify that mockPool.query is called exactly twice (500 items + 200 items)
+      expect(mockPool.query).toHaveBeenCalledTimes(2);
+    });
+
     test('should execute semanticSearch using HNSW cosine distance operator', async () => {
       const mockSearchResult = {
         chunkText: 'matched text',
@@ -231,7 +270,12 @@ describe('Log Sec Analyzer - Database Repository Integration Tests', () => {
         lineEnd: 5,
         similarity: 0.85,
       };
-      mockPool.query.mockResolvedValue({ rows: [mockSearchResult] });
+      mockPool.query.mockImplementation((sql: string, params?: any[]) => {
+        if (sql.includes('pg_extension')) {
+          return Promise.resolve({ rowCount: 1, rows: [{ '?column?': 1 }] });
+        }
+        return Promise.resolve({ rowCount: 1, rows: [mockSearchResult] });
+      });
 
       const results = await semanticSearch('session-uuid-123', [0.1, 0.2, 0.3], 5);
 

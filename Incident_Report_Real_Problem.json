@@ -1,7 +1,7 @@
 {
   "incidentId": "a0b1c2d3-e4f5-6789-abcd-ef0123456789",
   "targetAsset": "web-server-01",
-  "analysisDate": "Tue, 26 May 2026 11:36:37 GMT",
+  "analysisDate": "Wed, 27 May 2026 14:50:27 GMT",
   "findings": [
     {
       "severity": "high",

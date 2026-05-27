@@ -69,11 +69,11 @@ export default function SearchTab({ sessionId }: SearchTabProps) {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-md pl-10 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
-                placeholder="Ask a question or describe anomalies (e.g. 'SSH brute force', 'unauthorized sudo root')..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-md pl-10 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-red-500 font-mono"
+                placeholder="Enter search keywords or conceptual queries (e.g. 'root authentication bypass')..."
               />
             </div>
-            <Button type="submit" loading={loading} className="glow-cyan font-mono text-xs uppercase px-5">
+            <Button type="submit" loading={loading} className="glow-red font-mono text-xs uppercase px-5">
               SEARCH VECTOR INDEX
             </Button>
           </form>
@@ -90,10 +90,10 @@ export default function SearchTab({ sessionId }: SearchTabProps) {
       {/* Matching log chunks results */}
       <div className="space-y-4">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <div className="h-8 w-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+          <div className="py-12 flex flex-col items-center justify-center space-y-4">
+            <div className="h-8 w-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-xs font-mono text-slate-500 uppercase tracking-widest animate-pulse">
-              Running semantic vector queries...
+              COMPUTING LOG SEMANTIC SIMILARITY...
             </p>
           </div>
         ) : results.length === 0 ? (
@@ -112,11 +112,11 @@ export default function SearchTab({ sessionId }: SearchTabProps) {
               <Card key={result.id} className="border-slate-800/80 bg-slate-900/10 hover:border-slate-800 transition-colors">
                 
                 {/* Result header details */}
-                <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-2">
-                  <div>
-                    <CardTitle className="text-xs font-mono text-cyan-400 flex items-center gap-2">
-                      <Terminal className="h-3 w-3 text-cyan-500" />
-                      <span>LINE INDEX RANGE: {result.lineStart} - {result.lineEnd}</span>
+                <CardHeader className="bg-slate-950/40 pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xs font-mono text-red-400 flex items-center gap-2">
+                      <Terminal className="h-3 w-3 text-red-500" />
+                      <span>MATCHED LOG ENTRY (similarity: {(result.similarity * 100).toFixed(1)}%)</span>
                     </CardTitle>
                     <CardDescription className="text-slate-500 font-mono text-[10px] mt-0.5">
                       CHUNK INDEX: #{result.chunkIndex}
