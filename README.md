@@ -1,10 +1,10 @@
 # LogSec (ai-sec-analyzer)
 
-###Problem
+## Problem
 
 Organizations generate huge amounts of logs daily, making it difficult to manually detect threats, suspicious activities, and security incidents in real time.
 
-###Solution
+### Solution
 
 LogSec automatically ingests, analyzes, and monitors logs using AI-powered threat detection and RAG-based security analysis, helping teams quickly identify and investigate potential cyber threats through real-time insights and conversational querying.
 
