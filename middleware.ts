@@ -55,7 +55,7 @@ export async function middleware(req: NextRequest) {
     const token = await getToken({ req, secret });
     if (!token) {
       // Redirect unauthenticated operator attempts to sign-in portal
-      const loginUrl = new URL('/api/auth/signin', req.url);
+      const loginUrl = new URL('/auth/signin', req.url);
       loginUrl.searchParams.set('callbackUrl', req.url);
       return NextResponse.redirect(loginUrl);
     }

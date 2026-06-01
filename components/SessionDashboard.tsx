@@ -34,7 +34,7 @@ export default function SessionDashboard({
   // Authenticated operators enforcement check
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/api/auth/signin');
+      router.push('/auth/signin');
     }
   }, [status, router]);
 

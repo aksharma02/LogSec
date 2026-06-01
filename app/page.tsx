@@ -37,7 +37,7 @@ export default function IngestionLandingPage() {
   // Authenticated operators enforcement check
   React.useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/api/auth/signin');
+      router.push('/auth/signin');
     }
   }, [status, router]);
 

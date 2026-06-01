@@ -1,9 +1,14 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 import { getUserByEmail, createUserWithPassword, updateUserPassword, upsertUser } from '@/lib/db/users';
 
 const authOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || 'mock-google-client-id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'mock-google-client-secret',
+    }),
     CredentialsProvider({
       name: 'Security Analyst Portal',
       credentials: {
@@ -78,6 +83,9 @@ const authOptions = {
       }
     })
   ],
+  pages: {
+    signIn: '/auth/signin',
+  },
   callbacks: {
     async signIn({ user }: any) {
       if (user.email) {
