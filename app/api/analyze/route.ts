@@ -6,6 +6,7 @@ import OpenAI from 'openai';
 import { z } from 'zod';
 import { assembleContext } from '@/lib/rag';
 import { insertQaHistory } from '@/lib/db/qaHistory';
+import { getFindingsBySession } from '@/lib/db/findings';
 
 // Initialize the OpenAI SDK client using the environment key
 const openai = new OpenAI({
@@ -121,48 +122,255 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     if (isMock) {
       console.log('OpenAI key is mock. Running high-fidelity offline simulated streaming LLM...');
-      const mockResponse = {
-        summary: `Log analysis report for security inquiry: "${question}". Identified critical anomalies in the session trace, including high-volume SSH authentication failures from 203.0.113.5 and suspicious system command execution.`,
-        severity: "high",
-        threatCategories: ["Brute Force SSH", "Privilege Escalation"],
-        findings: [
-          {
-            title: "SSH Brute Force Attack Detected from 203.0.113.5",
-            severity: "high",
-            affectedIps: ["203.0.113.5"],
-            affectedUsers: ["admin", "root", "guest", "deploy", "test"],
+      
+      // Fetch actual findings for the session to guide the dynamic mock response
+      let dbFindings: any[] = [];
+      try {
+        dbFindings = await getFindingsBySession(sessionId);
+      } catch (dbErr) {
+        console.error('Failed to retrieve findings for session in mock route:', dbErr);
+      }
+
+      const lowerContext = context.toLowerCase();
+
+      // Collect simulated findings
+      const mockFindings: any[] = [];
+      const mockCategories = new Set<string>();
+      const mockRecommendations = new Set<string>();
+      let threatLevel: 'critical' | 'high' | 'medium' | 'low' | 'info' = 'info';
+
+      // 1. Map existing database findings to the mock response
+      if (dbFindings && dbFindings.length > 0) {
+        for (const finding of dbFindings) {
+          const findingSev = finding.severity as 'critical' | 'high' | 'medium' | 'low' | 'info';
+          if (
+            (findingSev === 'critical') ||
+            (findingSev === 'high' && threatLevel !== 'critical') ||
+            (findingSev === 'medium' && threatLevel !== 'critical' && threatLevel !== 'high') ||
+            (findingSev === 'low' && threatLevel !== 'critical' && threatLevel !== 'high' && threatLevel !== 'medium')
+          ) {
+            threatLevel = findingSev;
+          }
+
+          let category = 'Log Anomaly';
+          if (finding.type === 'brute_force_ssh') {
+            category = 'Brute Force SSH';
+            mockRecommendations.add('Block the attacking host IP immediately at your network egress firewall.');
+            mockRecommendations.add('Transition SSH interfaces away from password authentication to RSA/Ed25519 keys.');
+          } else if (finding.type === 'brute_force_web') {
+            category = 'Web Application Attack';
+            mockRecommendations.add('Deploy Web Application Firewall (WAF) rule to throttle request volume per source IP.');
+            mockRecommendations.add('Implement multifactor authentication (MFA) and lock accounts on consecutive failures.');
+          } else if (finding.type === 'port_scan') {
+            category = 'Reconnaissance';
+            mockRecommendations.add('Configure firewall port-knocking or strict ingress whitelists.');
+            mockRecommendations.add('Disable response messages for unused ports (stealth mode).');
+          } else if (finding.type === 'privilege_escalation') {
+            category = 'Privilege Escalation';
+            mockRecommendations.add('Restrict access rights and sudo permissions for system service accounts.');
+            mockRecommendations.add('Audit system accounts and update /etc/sudoers with high restrictions.');
+          } else if (finding.type === 'off_hours_access') {
+            category = 'Access Anomaly';
+            mockRecommendations.add('Verify if user accessed the network during off-hours with valid administrative business reason.');
+          } else if (finding.type === 'soap_api_fault') {
+            category = 'API Fault';
+            mockRecommendations.add('Review the SOAP endpoint availability and error handling middleware.');
+          } else if (finding.type === 'rate_limit_exceeded') {
+            category = 'Rate Limiting';
+            mockRecommendations.add('Implement exponential backoff retry algorithms or adjust SOAP request pacing.');
+          } else if (finding.type === 'socket_bind_failure') {
+            category = 'Infrastructure Port Conflict';
+            mockRecommendations.add('Identify conflicting processes running on port 8080 and assign a dedicated port.');
+          } else if (finding.type === 'app_critical_exception') {
+            category = 'Application Failure';
+            mockRecommendations.add('Inspect code handling database connections and exception wrapping logic.');
+          } else if (finding.type === 'resource_exhaustion_warning') {
+            category = 'Capacity Issue';
+            mockRecommendations.add('Provision extra disk space or clean up outdated application logs.');
+            mockRecommendations.add('Monitor host memory allocation and optimize runtime garbage collection.');
+          }
+          mockCategories.add(category);
+
+          const affectedIps = finding.evidence?.ip ? [finding.evidence.ip] : [];
+          const affectedUsers = finding.evidence?.userName ? [finding.evidence.userName] : [];
+          const sampleLines = finding.evidence?.sampleLines || [finding.evidence?.rawLine || finding.description];
+          
+          mockFindings.push({
+            title: finding.title,
+            severity: finding.severity,
+            affectedIps,
+            affectedUsers,
+            evidence: sampleLines,
+            iocs: {
+              ips: finding.evidence?.ip ? [finding.evidence.ip] : [],
+              ports: finding.evidence?.ports || (finding.evidence?.distinctPortsCount ? finding.evidence.ports : []),
+              userAgents: [],
+              hashes: []
+            }
+          });
+        }
+      }
+
+      // 2. If no findings in the DB, or context contains additional signatures, dynamically extract from context
+      if (mockFindings.length === 0) {
+        // Look for SOAP & Oracle Data Loader patterns
+        if (lowerContext.includes('soap') || lowerContext.includes('sbl-odu') || lowerContext.includes('rate limit')) {
+          threatLevel = 'medium';
+          mockCategories.add('API Fault');
+          mockCategories.add('Rate Limiting');
+          
+          if (lowerContext.includes('sbl-odu-01005') || lowerContext.includes('soapfaultexception') || lowerContext.includes('soap fault')) {
+            mockFindings.push({
+              title: 'SOAP Web Service Fault (SBL-ODU-01005)',
+              severity: 'medium',
+              affectedIps: [],
+              affectedUsers: ['oracle'],
+              evidence: [
+                'There was an error sending the SOAP request to web service: SBL-ODU-01005',
+                'SOAPImpRequestManager.handleSoapFaultException(): Handling SoapFaultException.'
+              ],
+              iocs: { ips: [], ports: [], userAgents: [], hashes: [] }
+            });
+            mockRecommendations.add('Verify web service endpoint routing url is fully operational and reachable.');
+            mockRecommendations.add('Inspect SOAP request structures and payload mappings.');
+          }
+          
+          if (lowerContext.includes('rate limit') || lowerContext.includes('limit error')) {
+            mockFindings.push({
+              title: 'SOAP Request Rate Limiting Triggered',
+              severity: 'medium',
+              affectedIps: [],
+              affectedUsers: ['oracle'],
+              evidence: [
+                'Experienced SOAP Request Rate Limit error while sending the validation request.'
+              ],
+              iocs: { ips: [], ports: [], userAgents: [], hashes: [] }
+            });
+            mockRecommendations.add('Adjust maximum thread counts or retry intervals in configurations.');
+            mockRecommendations.add('Implement exponential backoff algorithms for SOAP data loaders.');
+          }
+        }
+
+        // Look for application shutdown/socket error patterns
+        if (lowerContext.includes('socket') || lowerContext.includes('database connection failed') || lowerContext.includes('nullreferenceexception')) {
+          threatLevel = 'high';
+          mockCategories.add('Service Interruption');
+          mockCategories.add('Infrastructure Alert');
+
+          if (lowerContext.includes('socket on port 8080') || lowerContext.includes('address already in use')) {
+            mockFindings.push({
+              title: 'Port Binding Collision (Port 8080)',
+              severity: 'high',
+              affectedIps: ['192.168.1.1'],
+              affectedUsers: [],
+              evidence: [
+                'ERROR : Failed to bind socket on port 8080 - Address already in use'
+              ],
+              iocs: { ips: ['192.168.1.1'], ports: [8080], userAgents: [], hashes: [] }
+            });
+            mockRecommendations.add('Review processes bound to port 8080 using netstat/lsof.');
+          }
+
+          if (lowerContext.includes('database connection failed')) {
+            mockFindings.push({
+              title: 'Database Connection Timeout',
+              severity: 'high',
+              affectedIps: [],
+              affectedUsers: [],
+              evidence: [
+                'ERROR : Database connection failed - Timeout occurred'
+              ],
+              iocs: { ips: [], ports: [], userAgents: [], hashes: [] }
+            });
+            mockRecommendations.add('Check network connectivity between host and the PostgreSQL instance.');
+          }
+
+          if (lowerContext.includes('nullreferenceexception') || lowerContext.includes('unhandled exception')) {
+            mockFindings.push({
+              title: 'API Exception: NullReferenceException',
+              severity: 'high',
+              affectedIps: [],
+              affectedUsers: [],
+              evidence: [
+                'ERROR : Unhandled exception in API request: NullReferenceException'
+              ],
+              iocs: { ips: [], ports: [], userAgents: [], hashes: [] }
+            });
+            mockRecommendations.add('Review trace stack for NullReferenceException and implement null checking safely.');
+          }
+
+          if (lowerContext.includes('memory') || lowerContext.includes('disk space')) {
+            mockFindings.push({
+              title: 'Resource Allocation Warning',
+              severity: 'medium',
+              affectedIps: [],
+              affectedUsers: [],
+              evidence: [
+                lowerContext.includes('memory') ? 'WARNING : High memory usage detected: 85% utilized' : 'WARNING : Disk space running low: 5% remaining'
+              ],
+              iocs: { ips: [], ports: [], userAgents: [], hashes: [] }
+            });
+            mockRecommendations.add('Increase disk capacities or clean up temp logs.');
+            mockRecommendations.add('Monitor overall system memory footings.');
+          }
+        }
+
+        // SSH brute force fallback for default simulated logs
+        if (mockFindings.length === 0 && (lowerContext.includes('sshd') || lowerContext.includes('failed password') || lowerContext.includes('ssh'))) {
+          threatLevel = 'high';
+          mockCategories.add('Brute Force SSH');
+          mockFindings.push({
+            title: 'SSH Brute Force Attack Detected from 203.0.113.5',
+            severity: 'high',
+            affectedIps: ['203.0.113.5'],
+            affectedUsers: ['admin', 'root', 'guest', 'deploy', 'test'],
             evidence: [
-              "Failed password for invalid user admin from 203.0.113.5",
-              "Failed password for invalid user root from 203.0.113.5",
-              "Failed password for invalid user guest from 203.0.113.5"
+              'Failed password for invalid user admin from 203.0.113.5',
+              'Failed password for invalid user root from 203.0.113.5',
+              'Failed password for invalid user guest from 203.0.113.5'
             ],
             iocs: {
-              ips: ["203.0.113.5"],
+              ips: ['203.0.113.5'],
               ports: [49152, 49155, 49160],
               userAgents: [],
               hashes: []
             }
-          },
-          {
-            title: "Potential Privilege Escalation: root executing sudo",
-            severity: "medium",
-            affectedIps: [],
-            affectedUsers: ["root"],
-            evidence: ["root executed privilege escalation signature: sudo"],
-            iocs: {
-              ips: [],
-              ports: [],
-              userAgents: [],
-              hashes: []
-            }
-          }
-        ],
-        recommendations: [
-          "Block the host IP 203.0.113.5 immediately at your network egress firewall.",
-          "Transition SSH interfaces away from password authentication to RSA/Ed25519 keys.",
-          "Restrict privilege escalation rights for system accounts in /etc/sudoers.",
-          "Deploy an intrusion prevention system (e.g. fail2ban) to mitigate brute force sweeps."
-        ]
+          });
+          mockRecommendations.add('Block the host IP 203.0.113.5 immediately.');
+          mockRecommendations.add('Restrict SSH to key-based authentication only.');
+        }
+      }
+
+      // 3. Fallback generic log parsing summary if still empty (so we never return blank/broken JSON)
+      if (mockFindings.length === 0) {
+        threatLevel = 'info';
+        mockCategories.add('Log Ingestion Info');
+        mockFindings.push({
+          title: 'Generic Log Audit Verification Passed',
+          severity: 'info',
+          affectedIps: [],
+          affectedUsers: [],
+          evidence: [
+            'Logs parsed and ingested successfully with no critical signatures triggered.'
+          ],
+          iocs: { ips: [], ports: [], userAgents: [], hashes: [] }
+        });
+        mockRecommendations.add('Configure customized security rules specific to your enterprise application logs.');
+      }
+
+      // Final lists format
+      const finalCategories = Array.from(mockCategories);
+      const finalRecommendations = Array.from(mockRecommendations);
+      if (finalRecommendations.length === 0) {
+        finalRecommendations.push('Analyze system behavior under load.', 'Regularly backup active configuration sets.');
+      }
+
+      const mockResponse = {
+        summary: `Simulated AI Log Analysis for inquiry: "${question}". Analyzed retrieved security logs context for Session ${sessionId} containing relevant entries. Identified ${mockFindings.length} notable security findings / errors with an overall risk severity level of "${threatLevel}".`,
+        severity: threatLevel,
+        threatCategories: finalCategories,
+        findings: mockFindings,
+        recommendations: finalRecommendations
       };
 
       const mockJsonString = JSON.stringify(mockResponse, null, 2);

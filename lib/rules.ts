@@ -366,6 +366,200 @@ export function ruleOffHoursAccess(
 }
 
 /**
+ * RULE 6 — SOAP_API_FAULT
+ * Scans raw logs for SOAP faults, SBL-ODU errors, or general soap fault messages.
+ */
+export function ruleSoapApiFault(
+  entries: LogEntry[],
+  sessionId: string = ''
+): Omit<Finding, 'id' | 'createdAt'>[] {
+  const findings: Omit<Finding, 'id' | 'createdAt'>[] = [];
+  const seenMessages = new Set<string>();
+
+  for (const entry of entries) {
+    const rawLower = entry.rawLine.toLowerCase();
+    if (
+      rawLower.includes('soapfaultexception') ||
+      rawLower.includes('soap fault') ||
+      rawLower.includes('sbl-odu-') ||
+      rawLower.includes('error sending the soap request')
+    ) {
+      if (!seenMessages.has(entry.rawLine)) {
+        seenMessages.add(entry.rawLine);
+        findings.push({
+          sessionId,
+          type: 'soap_api_fault',
+          severity: 'medium',
+          title: 'SOAP Web Service Fault Detected',
+          description: `A SOAP web service fault or integration error was encountered: "${entry.rawLine.trim().substring(0, 150)}"`,
+          evidence: {
+            rawLine: entry.rawLine,
+            lineNum: entry.lineNum,
+          },
+          source: 'rule',
+        });
+      }
+    }
+  }
+  return findings;
+}
+
+/**
+ * RULE 7 — RATE_LIMIT_EXCEEDED
+ * Scans logs for API rate limit or request throttling warnings.
+ */
+export function ruleRateLimitAlert(
+  entries: LogEntry[],
+  sessionId: string = ''
+): Omit<Finding, 'id' | 'createdAt'>[] {
+  const findings: Omit<Finding, 'id' | 'createdAt'>[] = [];
+  const seenMessages = new Set<string>();
+
+  for (const entry of entries) {
+    const rawLower = entry.rawLine.toLowerCase();
+    if (
+      rawLower.includes('rate limit') ||
+      rawLower.includes('rate-limit') ||
+      rawLower.includes('too many requests') ||
+      rawLower.includes('rate limit error')
+    ) {
+      if (!seenMessages.has(entry.rawLine)) {
+        seenMessages.add(entry.rawLine);
+        findings.push({
+          sessionId,
+          type: 'rate_limit_exceeded',
+          severity: 'medium',
+          title: 'API / Service Rate Limiting Active',
+          description: `The application experienced request throttling or rate limiting: "${entry.rawLine.trim().substring(0, 150)}"`,
+          evidence: {
+            rawLine: entry.rawLine,
+            lineNum: entry.lineNum,
+          },
+          source: 'rule',
+        });
+      }
+    }
+  }
+  return findings;
+}
+
+/**
+ * RULE 8 — SOCKET_BIND_FAILURE
+ * Scans for socket binding errors or address in use issues.
+ */
+export function ruleSocketBindFailure(
+  entries: LogEntry[],
+  sessionId: string = ''
+): Omit<Finding, 'id' | 'createdAt'>[] {
+  const findings: Omit<Finding, 'id' | 'createdAt'>[] = [];
+  const seenMessages = new Set<string>();
+
+  for (const entry of entries) {
+    const rawLower = entry.rawLine.toLowerCase();
+    if (
+      rawLower.includes('failed to bind socket') ||
+      rawLower.includes('address already in use') ||
+      rawLower.includes('socket bind fail')
+    ) {
+      if (!seenMessages.has(entry.rawLine)) {
+        seenMessages.add(entry.rawLine);
+        findings.push({
+          sessionId,
+          type: 'socket_bind_failure',
+          severity: 'high',
+          title: 'Network Port Binding Conflict',
+          description: `Critical network port binding failure: "${entry.rawLine.trim().substring(0, 150)}"`,
+          evidence: {
+            rawLine: entry.rawLine,
+            lineNum: entry.lineNum,
+          },
+          source: 'rule',
+        });
+      }
+    }
+  }
+  return findings;
+}
+
+/**
+ * RULE 9 — APPLICATION_CRITICAL_EXCEPTION
+ * Scans logs for unhandled critical exceptions, database timeout errors, or application crash signatures.
+ */
+export function ruleAppCriticalException(
+  entries: LogEntry[],
+  sessionId: string = ''
+): Omit<Finding, 'id' | 'createdAt'>[] {
+  const findings: Omit<Finding, 'id' | 'createdAt'>[] = [];
+  const seenMessages = new Set<string>();
+
+  for (const entry of entries) {
+    const rawLower = entry.rawLine.toLowerCase();
+    if (
+      rawLower.includes('unhandled exception') ||
+      rawLower.includes('nullreferenceexception') ||
+      rawLower.includes('database connection failed') ||
+      rawLower.includes('timeout occurred')
+    ) {
+      if (!seenMessages.has(entry.rawLine)) {
+        seenMessages.add(entry.rawLine);
+        findings.push({
+          sessionId,
+          type: 'app_critical_exception',
+          severity: 'high',
+          title: 'Unhandled Application Exception / DB Failure',
+          description: `A critical runtime exception or database failure occurred: "${entry.rawLine.trim().substring(0, 150)}"`,
+          evidence: {
+            rawLine: entry.rawLine,
+            lineNum: entry.lineNum,
+          },
+          source: 'rule',
+        });
+      }
+    }
+  }
+  return findings;
+}
+
+/**
+ * RULE 10 — RESOURCE_EXHAUSTION_WARNING
+ * Scans for low disk space, high memory utilization, or hardware warnings.
+ */
+export function ruleResourceExhaustion(
+  entries: LogEntry[],
+  sessionId: string = ''
+): Omit<Finding, 'id' | 'createdAt'>[] {
+  const findings: Omit<Finding, 'id' | 'createdAt'>[] = [];
+  const seenMessages = new Set<string>();
+
+  for (const entry of entries) {
+    const rawLower = entry.rawLine.toLowerCase();
+    if (
+      rawLower.includes('high memory usage') ||
+      rawLower.includes('disk space running low') ||
+      rawLower.includes('low memory') ||
+      rawLower.includes('disk space low')
+    ) {
+      if (!seenMessages.has(entry.rawLine)) {
+        seenMessages.add(entry.rawLine);
+        findings.push({
+          sessionId,
+          type: 'resource_exhaustion_warning',
+          severity: 'medium',
+          title: 'System Resource Exhaustion Alert',
+          description: `System resource warning or capacity limit reached: "${entry.rawLine.trim().substring(0, 150)}"`,
+          evidence: {
+            rawLine: entry.rawLine,
+            lineNum: entry.lineNum,
+          },
+          source: 'rule',
+        });
+      }
+    }
+  }
+  return findings;
+}
+
+/**
  * Orchestrator that applies all pure rule checks to standard log entries,
  * calling insertFinding() for each result in a single Promise.all batch.
  */
@@ -382,6 +576,11 @@ export async function runRules(
   pendingFindings.push(...rulePortScan(entries, sessionId));
   pendingFindings.push(...rulePrivilegeEscalation(entries, sessionId));
   pendingFindings.push(...ruleOffHoursAccess(entries, sessionId));
+  pendingFindings.push(...ruleSoapApiFault(entries, sessionId));
+  pendingFindings.push(...ruleRateLimitAlert(entries, sessionId));
+  pendingFindings.push(...ruleSocketBindFailure(entries, sessionId));
+  pendingFindings.push(...ruleAppCriticalException(entries, sessionId));
+  pendingFindings.push(...ruleResourceExhaustion(entries, sessionId));
 
   console.log(`Rules engine processed. Generated ${pendingFindings.length} rule findings.`);
 

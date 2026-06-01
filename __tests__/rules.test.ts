@@ -1,5 +1,13 @@
 import { LogEntry } from '@/types';
-import { ruleBruteForceSsh, rulePrivilegeEscalation } from '@/lib/rules';
+import { 
+  ruleBruteForceSsh, 
+  rulePrivilegeEscalation,
+  ruleSoapApiFault,
+  ruleRateLimitAlert,
+  ruleSocketBindFailure,
+  ruleAppCriticalException,
+  ruleResourceExhaustion
+} from '@/lib/rules';
 
 describe('Log Sec Analyzer - Rules Engine Threat Signatures Tests', () => {
   const makeMockBaseEntry = (offsetMinutes: number, idx: number): LogEntry => ({
@@ -193,6 +201,164 @@ describe('Log Sec Analyzer - Rules Engine Threat Signatures Tests', () => {
       expect(findings).toHaveLength(1);
       expect(findings[0].evidence.userName).toBe('operator');
       expect(findings[0].evidence.triggeredPattern).toBe('sudo');
+    });
+  });
+
+  describe('RULE 6 — SOAP_API_FAULT', () => {
+    test('should detect SoapFaultException and SBL-ODU errors', () => {
+      const entries: LogEntry[] = [
+        {
+          id: 'e1',
+          sessionId: 'session-xyz',
+          lineNum: 1,
+          ts: new Date(),
+          ip: null,
+          userName: null,
+          action: null,
+          resource: null,
+          statusCode: null,
+          rawLine: 'Experienced SoapFaultException: Error sending the SOAP request to web service: SBL-ODU-01005',
+          format: 'generic',
+          parseError: null,
+        }
+      ];
+
+      const findings = ruleSoapApiFault(entries, 'session-xyz');
+      expect(findings).toHaveLength(1);
+      expect(findings[0].type).toBe('soap_api_fault');
+      expect(findings[0].severity).toBe('medium');
+    });
+  });
+
+  describe('RULE 7 — RATE_LIMIT_EXCEEDED', () => {
+    test('should detect rate limit errors', () => {
+      const entries: LogEntry[] = [
+        {
+          id: 'e1',
+          sessionId: 'session-xyz',
+          lineNum: 1,
+          ts: new Date(),
+          ip: null,
+          userName: null,
+          action: null,
+          resource: null,
+          statusCode: null,
+          rawLine: 'Experienced SOAP Request Rate Limit error while sending the validation request.',
+          format: 'generic',
+          parseError: null,
+        }
+      ];
+
+      const findings = ruleRateLimitAlert(entries, 'session-xyz');
+      expect(findings).toHaveLength(1);
+      expect(findings[0].type).toBe('rate_limit_exceeded');
+      expect(findings[0].severity).toBe('medium');
+    });
+  });
+
+  describe('RULE 8 — SOCKET_BIND_FAILURE', () => {
+    test('should detect port binding collision errors', () => {
+      const entries: LogEntry[] = [
+        {
+          id: 'e1',
+          sessionId: 'session-xyz',
+          lineNum: 1,
+          ts: new Date(),
+          ip: null,
+          userName: null,
+          action: null,
+          resource: null,
+          statusCode: null,
+          rawLine: 'Failed to bind socket on port 8080 - Address already in use',
+          format: 'generic',
+          parseError: null,
+        }
+      ];
+
+      const findings = ruleSocketBindFailure(entries, 'session-xyz');
+      expect(findings).toHaveLength(1);
+      expect(findings[0].type).toBe('socket_bind_failure');
+      expect(findings[0].severity).toBe('high');
+    });
+  });
+
+  describe('RULE 9 — APPLICATION_CRITICAL_EXCEPTION', () => {
+    test('should detect null reference and DB connection errors', () => {
+      const entries: LogEntry[] = [
+        {
+          id: 'e1',
+          sessionId: 'session-xyz',
+          lineNum: 1,
+          ts: new Date(),
+          ip: null,
+          userName: null,
+          action: null,
+          resource: null,
+          statusCode: null,
+          rawLine: 'Database connection failed - Timeout occurred',
+          format: 'generic',
+          parseError: null,
+        },
+        {
+          id: 'e2',
+          sessionId: 'session-xyz',
+          lineNum: 2,
+          ts: new Date(),
+          ip: null,
+          userName: null,
+          action: null,
+          resource: null,
+          statusCode: null,
+          rawLine: 'Unhandled exception in API request: NullReferenceException',
+          format: 'generic',
+          parseError: null,
+        }
+      ];
+
+      const findings = ruleAppCriticalException(entries, 'session-xyz');
+      expect(findings).toHaveLength(2);
+      expect(findings[0].type).toBe('app_critical_exception');
+      expect(findings[0].severity).toBe('high');
+    });
+  });
+
+  describe('RULE 10 — RESOURCE_EXHAUSTION_WARNING', () => {
+    test('should detect resource issues like low disk space and high memory', () => {
+      const entries: LogEntry[] = [
+        {
+          id: 'e1',
+          sessionId: 'session-xyz',
+          lineNum: 1,
+          ts: new Date(),
+          ip: null,
+          userName: null,
+          action: null,
+          resource: null,
+          statusCode: null,
+          rawLine: 'High memory usage detected: 85% utilized',
+          format: 'generic',
+          parseError: null,
+        },
+        {
+          id: 'e2',
+          sessionId: 'session-xyz',
+          lineNum: 2,
+          ts: new Date(),
+          ip: null,
+          userName: null,
+          action: null,
+          resource: null,
+          statusCode: null,
+          rawLine: 'Disk space running low: 5% remaining',
+          format: 'generic',
+          parseError: null,
+        }
+      ];
+
+      const findings = ruleResourceExhaustion(entries, 'session-xyz');
+      expect(findings).toHaveLength(2);
+      expect(findings[0].type).toBe('resource_exhaustion_warning');
+      expect(findings[0].severity).toBe('medium');
     });
   });
 });

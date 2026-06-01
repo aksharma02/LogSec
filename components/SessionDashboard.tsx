@@ -84,10 +84,16 @@ export default function SessionDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col">
+    <div className="min-h-screen text-slate-100 flex flex-col relative bg-slate-950">
+      {/* Background Image with Subtle Security Overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none z-0" 
+        style={{ backgroundImage: "url('/securityLog.jpg')", opacity: 0.20 }}
+      />
+      <div className="absolute inset-0 bg-slate-950/45 pointer-events-none z-0" />
       
       {/* Dynamic Security Topbar Banner */}
-      <header className="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 p-4 sticky top-0 z-30">
+      <header className="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 p-4 sticky top-0 z-30 relative">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
@@ -116,7 +122,7 @@ export default function SessionDashboard({
       </header>
 
       {/* Main Grid: Sidebar + Tabs */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row gap-6">
+      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row gap-6 relative z-10">
         
         {/* Sidebar Specifications */}
         <aside className="w-full md:w-64 space-y-6 shrink-0">

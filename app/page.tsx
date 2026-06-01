@@ -134,9 +134,16 @@ export default function IngestionLandingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col justify-center items-center p-4 sm:p-8">
+    <main className="min-h-screen text-slate-100 flex flex-col justify-center items-center p-4 sm:p-8 relative bg-slate-950">
+      {/* Background Image with Dark Semi-Transparent Overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none z-0" 
+        style={{ backgroundImage: "url('/securityLog.jpg')", opacity: 0.25 }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/30 to-slate-950/60 pointer-events-none z-0" />
+      
       {/* Background radial ambient styling */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.06),transparent_60%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_60%)] pointer-events-none z-0" />
 
       <div className="w-full max-w-2xl relative space-y-8 z-10">
         
