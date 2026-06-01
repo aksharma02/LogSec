@@ -18,6 +18,14 @@ async function ensureMigrated() {
  */
 export async function POST(req: Request) {
   try {
+    // 1. Verify if DATABASE_URL environment variable is configured in Render
+    const hasDbUrl = !!process.env.DATABASE_URL;
+    if (!hasDbUrl) {
+      return NextResponse.json({ 
+        error: "Render Configuration Warning: DATABASE_URL environment variable is NOT defined in your Render dashboard environment settings! Please create a PostgreSQL database and bind it as DATABASE_URL." 
+      }, { status: 500 });
+    }
+
     // Force schema migrations to run automatically on production boot/first request
     await ensureMigrated();
 
@@ -32,8 +40,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ exists: !!user });
   } catch (err: any) {
     console.error('Error during Operator account pre-flight check:', err);
+    
+    // Extract robust error diagnostics
+    const errMessage = err instanceof Error ? err.message : String(err);
+    const errCode = err && typeof err === 'object' ? err.code || 'NO_CODE' : 'NO_CODE';
+
     return NextResponse.json({ 
-      error: `Database Service Exception: ${err.message || 'Unknown database crash.'}` 
+      error: `Database Service Exception [Code ${errCode}]: ${errMessage}` 
     }, { status: 500 });
   }
 }
