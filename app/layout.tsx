@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "Automated cybersecurity logs sniffer and RAG context assistant dashboard.",
   icons: {
     icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
