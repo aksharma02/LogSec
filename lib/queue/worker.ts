@@ -1,5 +1,6 @@
 import { Worker, Job } from 'bullmq';
 import fs from 'fs';
+import http from 'http';
 import { redisConnection } from './client';
 import { parseLogFile } from '../parsers';
 import { updateSessionStatus } from '../db/sessions';
@@ -7,6 +8,15 @@ import { insertLogEntries } from '../db/logEntries';
 import { runRuleDetection } from '../rules';
 import { chunkLogEntries, embedBatch } from '../embeddings';
 import { insertChunks } from '../db/chunks';
+
+// Create a lightweight HTTP health check listener to satisfy Render's Free Tier web port binding check
+const PORT = process.env.PORT || 10000;
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('BullMQ Worker is active and processing security logs.\n');
+}).listen(PORT, () => {
+  console.log(`Render Free Tier Dummy Health Check server is listening on port ${PORT}`);
+});
 
 interface WorkerJobPayload {
   sessionId: string;
