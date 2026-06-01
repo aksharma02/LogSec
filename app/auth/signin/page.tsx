@@ -97,16 +97,17 @@ function SignInForm() {
           });
 
           if (!checkRes.ok) {
-            throw new Error('PreFlightFailed');
+            const errData = await checkRes.json().catch(() => ({}));
+            throw new Error(errData.error || 'Connection to cybersecurity database timed out.');
           }
 
           const data = await checkRes.json();
           exists = !!data.exists;
-        } catch (dbErr) {
-          console.warn('Pre-flight check query error (delegating fallback to NextAuth authorization):', dbErr);
-          // If the pre-flight check fails (e.g. database not fully migrated yet),
-          // we assume exists = false so that NextAuth can auto-run migrations and handle registration on-the-fly.
-          exists = false;
+        } catch (dbErr: any) {
+          console.warn('Pre-flight check query error:', dbErr);
+          setError(dbErr.message || 'Cybersecurity database is offline.');
+          setLoading(false);
+          return;
         }
       }
 

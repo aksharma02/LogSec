@@ -50,8 +50,8 @@ const authOptions = {
           if (isSignUp) {
             // Registration mode
             if (user) {
-              // Account already exists under this email, block duplicate signup
-              throw new Error('AccountAlreadyExists');
+              console.warn(`Registration blocked: operator already exists: ${email}`);
+              return null;
             }
 
             // Create new operator
@@ -71,7 +71,8 @@ const authOptions = {
           } else {
             // Sign In mode
             if (!user) {
-              throw new Error('AccountDoesNotExist');
+              console.warn(`Login blocked: operator does not exist: ${email}`);
+              return null;
             }
 
             // User exists, verify password
@@ -84,12 +85,12 @@ const authOptions = {
               };
             }
 
-            throw new Error('IncorrectPassword');
+            console.warn(`Login blocked: incorrect password for operator: ${email}`);
+            return null;
           }
         } catch (err: any) {
-          console.warn('Operator authorization error:', err.message);
-          // Pass the specific error message to NextAuth client callback
-          throw err;
+          console.error('Operator authorization exception:', err);
+          return null;
         }
       }
     })

@@ -32,6 +32,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ exists: !!user });
   } catch (err: any) {
     console.error('Error during Operator account pre-flight check:', err);
-    return NextResponse.json({ error: 'Internal database service error.' }, { status: 500 });
+    return NextResponse.json({ 
+      error: `Database Service Exception: ${err.message || 'Unknown database crash.'}` 
+    }, { status: 500 });
   }
 }
