@@ -1,19 +1,9 @@
 import NextAuth from 'next-auth';
-import GithubProvider from 'next-auth/providers/github';
-import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { upsertUser } from '@/lib/db/users';
+import { getUserByEmail, createUserWithPassword, updateUserPassword, upsertUser } from '@/lib/db/users';
 
 const authOptions = {
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID || 'mock-github-client-id',
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || 'mock-github-client-secret',
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || 'mock-google-client-id',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'mock-google-client-secret',
-    }),
     CredentialsProvider({
       name: 'Security Analyst Portal',
       credentials: {
@@ -21,8 +11,15 @@ const authOptions = {
         password: { label: "Security Password", type: "password", placeholder: "admin" }
       },
       async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        const email = credentials.email.toLowerCase().trim();
+        const password = credentials.password;
+
         // Support standard development operator credentials
-        if (credentials?.email === 'admin@sec.company' && credentials?.password === 'admin') {
+        if (email === 'admin@sec.company' && password === 'admin') {
           return {
             id: 'dev-operator-1',
             name: 'Lead SOC Analyst',
@@ -30,16 +27,54 @@ const authOptions = {
             image: null
           };
         }
-        // Let operators register or test with custom emails under the 'admin' password
-        if (credentials?.email && credentials?.password === 'admin') {
-          return {
-            id: 'custom-operator',
-            name: credentials.email.split('@')[0],
-            email: credentials.email,
-            image: null
-          };
+
+        try {
+          const user = await getUserByEmail(email);
+
+          if (user) {
+            // User exists, verify password
+            if (user.password === password) {
+              return {
+                id: user.id,
+                name: user.name || email.split('@')[0],
+                email: user.email,
+                image: user.image
+              };
+            }
+            
+            // If user exists but has no password (e.g. legacy user), set it on first login!
+            if (!user.password) {
+              await updateUserPassword(user.email, password);
+              return {
+                id: user.id,
+                name: user.name || email.split('@')[0],
+                email: user.email,
+                image: user.image
+              };
+            }
+
+            console.warn(`Auth failed: Incorrect password for user ${email}`);
+            return null;
+          } else {
+            // User does not exist, automatically register / create password!
+            const newUser = await createUserWithPassword({
+              name: email.split('@')[0],
+              email: email,
+              password: password
+            });
+
+            console.log(`Successfully registered new analyst account: ${email}`);
+            return {
+              id: newUser.id,
+              name: newUser.name || email.split('@')[0],
+              email: newUser.email,
+              image: newUser.image
+            };
+          }
+        } catch (err) {
+          console.error('Error during Operator credentials authorization:', err);
+          return null;
         }
-        return null;
       }
     })
   ],
