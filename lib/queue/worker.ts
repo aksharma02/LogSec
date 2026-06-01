@@ -11,11 +11,21 @@ import { insertChunks } from '../db/chunks';
 
 // Create a lightweight HTTP health check listener to satisfy Render's Free Tier web port binding check
 const PORT = process.env.PORT || 10000;
-http.createServer((req, res) => {
+const healthServer = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('BullMQ Worker is active and processing security logs.\n');
-}).listen(PORT, () => {
-  console.log(`Render Free Tier Dummy Health Check server is listening on port ${PORT}`);
+});
+
+healthServer.on('error', (err: any) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`[Worker] Port ${PORT} is already in use (bound by Next.js UI). Worker proceeding in concurrent backend mode.`);
+  } else {
+    console.error('[Worker] HTTP Health Check server error:', err);
+  }
+});
+
+healthServer.listen(PORT, () => {
+  console.log(`[Worker] Render Free Tier Dummy Health Check server is listening on port ${PORT}`);
 });
 
 interface WorkerJobPayload {
