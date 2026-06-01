@@ -1,17 +1,25 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Shield, Lock, Mail, AlertTriangle, UserPlus, KeyRound } from 'lucide-react';
 
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { status } = useSession();
   
   // Retrieve NextAuth parameters
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const errorParam = searchParams.get('error');
+
+  // Fast-track redirect if already authenticated
+  useEffect(() => {
+    if (status === 'authenticated') {
+      window.location.href = callbackUrl;
+    }
+  }, [status, callbackUrl]);
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -73,6 +81,49 @@ function SignInForm() {
     setError(null);
 
     try {
+      const normalizedEmail = email.toLowerCase().trim();
+      const isDevAdmin = normalizedEmail === 'admin@sec.company';
+
+      // 1. Perform pre-flight account existence check
+      let exists = false;
+      if (isDevAdmin) {
+        exists = true;
+      } else {
+        try {
+          const checkRes = await fetch('/api/auth/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: normalizedEmail }),
+          });
+
+          if (!checkRes.ok) {
+            throw new Error('PreFlightFailed');
+          }
+
+          const data = await checkRes.json();
+          exists = !!data.exists;
+        } catch (dbErr) {
+          console.warn('Pre-flight check query error (falling back to standard NextAuth callback):', dbErr);
+          // If the DB check fails, we fall back to standard NextAuth to avoid blocking logins
+          exists = true;
+        }
+      }
+
+      // Dynamic toggle feedback based on exist state
+      if (isSignUp && exists) {
+        setError('An operator account already exists with this email. Please sign in instead.');
+        setIsSignUp(false);
+        setLoading(false);
+        return;
+      }
+
+      if (!isSignUp && !exists) {
+        setError('This operator account does not exist. Please sign up to create a password.');
+        setIsSignUp(true);
+        setLoading(false);
+        return;
+      }
+
       // Store credentials if "Remember Me" is active (and not signing up)
       if (rememberMe && !isSignUp) {
         localStorage.setItem('logsec_saved_email', email);
@@ -84,8 +135,9 @@ function SignInForm() {
         localStorage.setItem('logsec_remember_me', 'false');
       }
 
+      // 2. Submit to NextAuth Provider
       const res = await signIn('credentials', {
-        email,
+        email: normalizedEmail,
         password,
         isSignUp: isSignUp ? 'true' : 'false',
         redirect: false,
@@ -93,24 +145,15 @@ function SignInForm() {
       });
 
       if (res?.error) {
-        if (res.error.includes('AccountAlreadyExists')) {
-          setError('An operator account already exists with this email. Please sign in instead.');
-          setIsSignUp(false);
-        } else if (res.error.includes('AccountDoesNotExist')) {
-          setError('This operator account does not exist. Please sign up to register.');
-          setIsSignUp(true);
-        } else if (res.error.includes('IncorrectPassword')) {
-          setError('Incorrect security password for this operator account.');
-        } else {
-          setError('Invalid email or security password credentials.');
-        }
+        setError('Incorrect security password for this operator account.');
         setLoading(false);
       } else {
-        router.push(callbackUrl);
+        // Perform a hard reload/navigation to callbackUrl to force cookie synchronization
+        window.location.href = callbackUrl;
       }
     } catch (err: any) {
       console.error('Login submit crash:', err);
-      setError('Connection refused or authentication timeout.');
+      setError('Connection refused or database migration timeout.');
       setLoading(false);
     }
   };
