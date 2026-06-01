@@ -1,19 +1,15 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
-import { getUserByEmail, createUserWithPassword, updateUserPassword, upsertUser } from '@/lib/db/users';
+import { getUserByEmail, createUserWithPassword, upsertUser } from '@/lib/db/users';
 
 const authOptions = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || 'mock-google-client-id',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'mock-google-client-secret',
-    }),
     CredentialsProvider({
       name: 'Security Analyst Portal',
       credentials: {
-        email: { label: "Operator Email", type: "email", placeholder: "admin@sec.company" },
-        password: { label: "Security Password", type: "password", placeholder: "admin" }
+        email: { label: "Operator Email", type: "email" },
+        password: { label: "Security Password", type: "password" },
+        isSignUp: { type: "text" } // 'true' or 'false'
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -22,9 +18,10 @@ const authOptions = {
 
         const email = credentials.email.toLowerCase().trim();
         const password = credentials.password;
+        const isSignUp = credentials.isSignUp === 'true';
 
-        // Support standard development operator credentials
-        if (email === 'admin@sec.company' && password === 'admin') {
+        // Support standard development operator credentials for login
+        if (!isSignUp && email === 'admin@sec.company' && password === 'admin') {
           return {
             id: 'dev-operator-1',
             name: 'Lead SOC Analyst',
@@ -36,32 +33,14 @@ const authOptions = {
         try {
           const user = await getUserByEmail(email);
 
-          if (user) {
-            // User exists, verify password
-            if (user.password === password) {
-              return {
-                id: user.id,
-                name: user.name || email.split('@')[0],
-                email: user.email,
-                image: user.image
-              };
-            }
-            
-            // If user exists but has no password (e.g. legacy user), set it on first login!
-            if (!user.password) {
-              await updateUserPassword(user.email, password);
-              return {
-                id: user.id,
-                name: user.name || email.split('@')[0],
-                email: user.email,
-                image: user.image
-              };
+          if (isSignUp) {
+            // Registration mode
+            if (user) {
+              // Account already exists under this email, block duplicate signup
+              throw new Error('AccountAlreadyExists');
             }
 
-            console.warn(`Auth failed: Incorrect password for user ${email}`);
-            return null;
-          } else {
-            // User does not exist, automatically register / create password!
+            // Create new operator
             const newUser = await createUserWithPassword({
               name: email.split('@')[0],
               email: email,
@@ -75,10 +54,28 @@ const authOptions = {
               email: newUser.email,
               image: newUser.image
             };
+          } else {
+            // Sign In mode
+            if (!user) {
+              throw new Error('AccountDoesNotExist');
+            }
+
+            // User exists, verify password
+            if (user.password === password) {
+              return {
+                id: user.id,
+                name: user.name || email.split('@')[0],
+                email: user.email,
+                image: user.image
+              };
+            }
+
+            throw new Error('IncorrectPassword');
           }
-        } catch (err) {
-          console.error('Error during Operator credentials authorization:', err);
-          return null;
+        } catch (err: any) {
+          console.warn('Operator authorization error:', err.message);
+          // Pass the specific error message to NextAuth client callback
+          throw err;
         }
       }
     })

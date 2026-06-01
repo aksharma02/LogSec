@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Shield, Lock, Mail, AlertTriangle } from 'lucide-react';
+import { Shield, Lock, Mail, AlertTriangle, UserPlus, KeyRound } from 'lucide-react';
 
 function SignInForm() {
   const router = useRouter();
@@ -13,11 +13,12 @@ function SignInForm() {
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const errorParam = searchParams.get('error');
 
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load stored credentials on mount
@@ -25,6 +26,15 @@ function SignInForm() {
     if (errorParam) {
       if (errorParam === 'CredentialsSignin') {
         setError('Invalid operator email or security password.');
+      } else if (errorParam.includes('AccountAlreadyExists')) {
+        setError('An operator account already exists with this email. Please sign in instead.');
+        setIsSignUp(false);
+      } else if (errorParam.includes('AccountDoesNotExist')) {
+        setError('This operator account does not exist. Please sign up to register.');
+        setIsSignUp(true);
+      } else if (errorParam.includes('IncorrectPassword')) {
+        setError('Incorrect security password for this operator account.');
+        setIsSignUp(false);
       } else {
         setError('An authentication error occurred. Please try again.');
       }
@@ -53,16 +63,22 @@ function SignInForm() {
       return;
     }
 
+    // Password match check in Sign Up mode
+    if (isSignUp && password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      // Store credentials if "Remember Me" is active
-      if (rememberMe) {
+      // Store credentials if "Remember Me" is active (and not signing up)
+      if (rememberMe && !isSignUp) {
         localStorage.setItem('logsec_saved_email', email);
         localStorage.setItem('logsec_saved_password', password);
         localStorage.setItem('logsec_remember_me', 'true');
-      } else {
+      } else if (!isSignUp) {
         localStorage.removeItem('logsec_saved_email');
         localStorage.removeItem('logsec_saved_password');
         localStorage.setItem('logsec_remember_me', 'false');
@@ -71,33 +87,31 @@ function SignInForm() {
       const res = await signIn('credentials', {
         email,
         password,
+        isSignUp: isSignUp ? 'true' : 'false',
         redirect: false,
         callbackUrl,
       });
 
       if (res?.error) {
-        setError('Invalid operator email or security password.');
+        if (res.error.includes('AccountAlreadyExists')) {
+          setError('An operator account already exists with this email. Please sign in instead.');
+          setIsSignUp(false);
+        } else if (res.error.includes('AccountDoesNotExist')) {
+          setError('This operator account does not exist. Please sign up to register.');
+          setIsSignUp(true);
+        } else if (res.error.includes('IncorrectPassword')) {
+          setError('Incorrect security password for this operator account.');
+        } else {
+          setError('Invalid email or security password credentials.');
+        }
         setLoading(false);
       } else {
         router.push(callbackUrl);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login submit crash:', err);
       setError('Connection refused or authentication timeout.');
       setLoading(false);
-    }
-  };
-
-  // Handle Google OAuth trigger
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    setError(null);
-    try {
-      await signIn('google', { callbackUrl });
-    } catch (err) {
-      console.error('Google Sign-in failed:', err);
-      setError('Google Authentication services are currently unconfigured.');
-      setGoogleLoading(false);
     }
   };
 
@@ -105,7 +119,7 @@ function SignInForm() {
     <div className="w-full max-w-md relative z-10 space-y-6">
       
       {/* Branding header */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-2 animate-fadeIn">
         <div className="flex flex-col items-center justify-center space-y-1 mb-2">
           <img 
             src="/logo.png" 
@@ -117,11 +131,11 @@ function SignInForm() {
           Log<span className="text-red-400">Sec</span>
         </h1>
         <p className="text-slate-400 text-xs sm:text-sm uppercase tracking-wider font-mono">
-          Operator Access Portal
+          {isSignUp ? 'Operator Registration' : 'Operator Access Portal'}
         </p>
       </div>
 
-      {/* Credentials Form */}
+      {/* Form Container */}
       <div className="bg-slate-900/55 backdrop-blur-xl border border-slate-800/80 rounded-xl p-6 sm:p-8 shadow-2xl space-y-6">
         
         {error && (
@@ -132,9 +146,11 @@ function SignInForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Operator Email */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-              Operator Email
+              Operator Email Address
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
@@ -143,12 +159,13 @@ function SignInForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-md pl-10 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-red-500/80 font-mono placeholder:text-slate-700"
-                placeholder="operator@company.com"
+                placeholder="analyst@company.com"
                 required
               />
             </div>
           </div>
 
+          {/* Security Password */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
               Security Password
@@ -166,22 +183,44 @@ function SignInForm() {
             </div>
           </div>
 
-          {/* Remember Me Checkbox */}
-          <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center space-x-2 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-slate-800 text-red-500 focus:ring-red-500/50 bg-slate-950 h-4 w-4 cursor-pointer"
-              />
-              <span className="text-xs text-slate-400 group-hover:text-slate-300 font-mono transition-colors">
-                Remember my credentials
-              </span>
-            </label>
-          </div>
+          {/* Confirm Password (only shown in Sign Up mode) */}
+          {isSignUp && (
+            <div className="space-y-1.5 animate-fadeIn">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+                Confirm Security Password
+              </label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-md pl-10 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-red-500/80 font-mono placeholder:text-slate-700"
+                  placeholder="••••••••"
+                  required={isSignUp}
+                />
+              </div>
+            </div>
+          )}
 
-          {/* Submit Credentials */}
+          {/* Remember Me Checkbox (only shown in Sign In mode) */}
+          {!isSignUp && (
+            <div className="flex items-center justify-between pt-1 animate-fadeIn">
+              <label className="flex items-center space-x-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-slate-800 text-red-500 focus:ring-red-500/50 bg-slate-950 h-4 w-4 cursor-pointer"
+                />
+                <span className="text-xs text-slate-400 group-hover:text-slate-300 font-mono transition-colors">
+                  Remember my credentials
+                </span>
+              </label>
+            </div>
+          )}
+
+          {/* Submit Action Button */}
           <button
             type="submit"
             disabled={loading}
@@ -192,7 +231,12 @@ function SignInForm() {
             {loading ? (
               <>
                 <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                AUTHENTICATING...
+                PROCESSING...
+              </>
+            ) : isSignUp ? (
+              <>
+                <UserPlus className="h-4 w-4" />
+                Create Account & Sign In
               </>
             ) : (
               <>
@@ -203,33 +247,21 @@ function SignInForm() {
           </button>
         </form>
 
-        {/* OR Divider */}
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t border-slate-800/80"></div>
-          <span className="flex-shrink mx-4 text-[10px] text-slate-500 font-mono uppercase tracking-wider">or</span>
-          <div className="flex-grow border-t border-slate-800/80"></div>
+        {/* Dynamic Mode Switcher */}
+        <div className="text-center pt-2 border-t border-slate-800/80">
+          <button
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setError(null);
+            }}
+            className="text-xs font-mono text-slate-400 hover:text-red-400 transition-colors"
+          >
+            {isSignUp 
+              ? 'Already have an operator account? Sign in here' 
+              : "Don't have an operator account? Sign up / Create password"
+            }
+          </button>
         </div>
-
-        {/* Google SSO Button */}
-        <button
-          onClick={handleGoogleSignIn}
-          disabled={googleLoading}
-          className={`w-full font-mono text-xs uppercase tracking-widest bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 rounded-md py-2.5 font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
-            googleLoading ? 'opacity-70 cursor-not-allowed' : ''
-          }`}
-        >
-          {googleLoading ? (
-            <div className="h-4 w-4 border-2 border-slate-300 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-          )}
-          Sign In with Google SSO
-        </button>
 
       </div>
 
