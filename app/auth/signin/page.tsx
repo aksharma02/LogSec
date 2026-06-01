@@ -103,9 +103,10 @@ function SignInForm() {
           const data = await checkRes.json();
           exists = !!data.exists;
         } catch (dbErr) {
-          console.warn('Pre-flight check query error (falling back to standard NextAuth callback):', dbErr);
-          // If the DB check fails, we fall back to standard NextAuth to avoid blocking logins
-          exists = true;
+          console.warn('Pre-flight check query error (delegating fallback to NextAuth authorization):', dbErr);
+          // If the pre-flight check fails (e.g. database not fully migrated yet),
+          // we assume exists = false so that NextAuth can auto-run migrations and handle registration on-the-fly.
+          exists = false;
         }
       }
 

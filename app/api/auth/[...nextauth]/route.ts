@@ -1,6 +1,17 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { getUserByEmail, createUserWithPassword, upsertUser } from '@/lib/db/users';
+import { runMigrations } from '@/lib/db/migrations';
+
+let migrationsPromise: Promise<void> | null = null;
+async function ensureMigrated() {
+  if (!migrationsPromise) {
+    migrationsPromise = runMigrations().catch(err => {
+      console.error('Auto-migration during NextAuth authorize failed:', err);
+    });
+  }
+  return migrationsPromise;
+}
 
 const authOptions = {
   providers: [
@@ -15,6 +26,9 @@ const authOptions = {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
+
+        // Auto-run schema migrations on incoming login/signup requests
+        await ensureMigrated();
 
         const email = credentials.email.toLowerCase().trim();
         const password = credentials.password;

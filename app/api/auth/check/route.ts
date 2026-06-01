@@ -1,5 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getUserByEmail } from '@/lib/db/users';
+import { runMigrations } from '@/lib/db/migrations';
+
+let migrationsPromise: Promise<void> | null = null;
+async function ensureMigrated() {
+  if (!migrationsPromise) {
+    migrationsPromise = runMigrations().catch(err => {
+      console.error('Auto-migration during pre-flight check failed:', err);
+    });
+  }
+  return migrationsPromise;
+}
 
 /**
  * Pre-flight check endpoint to safely verify if an operator account exists.
@@ -7,6 +18,9 @@ import { getUserByEmail } from '@/lib/db/users';
  */
 export async function POST(req: Request) {
   try {
+    // Force schema migrations to run automatically on production boot/first request
+    await ensureMigrated();
+
     const { email } = await req.json();
     if (!email) {
       return NextResponse.json({ error: 'Email parameter is required.' }, { status: 400 });
