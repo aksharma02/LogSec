@@ -104,6 +104,16 @@ Copy `.env.example` to `.env.local` and configure these variables:
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | `GOCSPX-...` |
 
 ---
+### Tech Stack
+- **Frontend** — Next.js 14, React 18, TypeScript, Tailwind CSS, Recharts
+- **Backend** — Node.js, Next.js API routes, TypeScript
+- **Database** — PostgreSQL
+- **AI/ML** — OpenAI API, embeddings-based RAG
+- **Job Queue** — BullMQ + Redis
+- **Auth** — NextAuth.js
+- **Security** — Rate limiting, Zod validation
+- **Testing** — Jest
+---
 
 ## 📖 Step-by-Step Installation & Operations Guide
 
