@@ -37,7 +37,7 @@ export async function enqueueLogProcessing(
         type: 'exponential',
         delay: 1000, // Start backoff retry delay at 1000ms (1 second)
       },
-      removeOnComplete: true, // Prune successfully completed jobs automatically
+      removeOnComplete: { count: 100 }, // Keep last 100 completed jobs for status polling
       removeOnFail: false,   // Retain failures for diagnostic security checks
     }
   );
